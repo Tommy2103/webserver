@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include "Address.hpp"
 #include "SocketTCP.hpp"
 #include "Connection.hpp"
@@ -18,11 +18,11 @@ private:
 public:
 	ClientTCP();
     ~ClientTCP();
-	bool connetti(Address server);
-	bool invia(char* msg);
-	bool invia(void* msg, int len);
-	char* ricevi();
-	void* ricevi(int* len);
+	bool connect(Address server);
+	bool send(std::string msg);
+	bool send(void* msg, int len);
+	std::string receive();
+	void* receive(int* len);
 };
 
 
@@ -32,29 +32,29 @@ ClientTCP::~ClientTCP() {
     delete this->conn;
 }
 
-bool ClientTCP::connetti(Address server) {
+bool ClientTCP::connect(Address server) {
 	struct sockaddr_in addr = server.getAddress();
-	int rs = connect(this->sock_id, (struct sockaddr*) &addr, (socklen_t) sizeof(struct sockaddr));
+	int rs = ::connect(this->sock_id, (struct sockaddr*) &addr, (socklen_t) sizeof(struct sockaddr));
 	
 	if (rs) return true;
     this->conn = new Connection(this->sock_id);
 	return false;
 }
 
-bool ClientTCP::invia(char* msg) {
-	return invia(msg, strlen(msg));
+bool ClientTCP::send(std::string msg) {
+	return this->conn->send(msg);
 }
 
-bool ClientTCP::invia(void* msg, int len) {
-	return this->conn->invia(msg, len);
+bool ClientTCP::send(void* msg, int len) {
+	return this->conn->send(msg, len);
 }
 
-char* ClientTCP::ricevi() {
-	return this->conn->ricevi();
+std::string ClientTCP::receive() {
+	return this->conn->receive();
 }
 
-void* ClientTCP::ricevi(int* len) {
-	return this->conn->ricevi(len);
+void* ClientTCP::receive(int* len) {
+	return this->conn->receive(len);
 }
 
 #endif

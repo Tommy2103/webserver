@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -16,14 +16,14 @@
 class ServerTCP : public SocketTCP
 {
 public:
-	ServerTCP(char* address, int port);
-	Connection* ascolta();
+	ServerTCP(std::string address, int port);
+	Connection* listen();
 };
 
 
-ServerTCP::ServerTCP(char* address, int port) : SocketTCP() {
+ServerTCP::ServerTCP(std::string address, int port) : SocketTCP() {
 
-	Address server_addr((char*) address, port);
+	Address server_addr(address, port);
 	struct sockaddr_in bind_addr = server_addr.getAddress();
 	int rc = bind(this->sock_id, 
 		(struct sockaddr*) &bind_addr, 
@@ -31,9 +31,9 @@ ServerTCP::ServerTCP(char* address, int port) : SocketTCP() {
 	if (rc) errore((char*) "bind()", -2);
 }
 
-Connection* ServerTCP::ascolta() {
+Connection* ServerTCP::listen() {
 	
-	int rc = listen(sock_id, 50);
+	int rc = ::listen(sock_id, SOMAXCONN);
 	if (rc) errore((char*) "listen()", -3);
 
     

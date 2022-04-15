@@ -1,6 +1,7 @@
 #ifndef __CONNECTION_HPP
 #define __CONNECTION_HPP
 
+#include <cstddef>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -18,10 +19,10 @@ private:
 public:
 	Connection(int id);
 	~Connection();
-	bool invia(char* msg);
-	bool invia(void* msg, int len);
-	char* ricevi();
-	void* ricevi(int* len);
+	bool send(std::string msg);
+	bool send(void* msg, int len);
+	std::string receive();
+	void* receive(int* len);
 	int getId();
 	void setId(int id);
 };
@@ -35,24 +36,26 @@ Connection::~Connection() {
 	int rc = shutdown(getId(), SHUT_RDWR);
 }
 
-bool Connection::invia(char* msg) {
-	return invia(msg, strlen(msg)+1);
+bool Connection::send(std::string msg) {
+	char const* c_msg = msg.c_str();
+	return this->send((void*) c_msg, strlen(c_msg));
 }
 
-bool Connection::invia(void* msg, int len) {
-
-	int rs = send(this->id, msg, len, 0);
+bool Connection::send(void* msg, int len) {
+	int rs = ::send(this->id, msg, len, 0);
 	if (rs == -1) return true;
 	return false;
 }
 
-char* Connection::ricevi() {
+std::string Connection::receive() {
 	int len = MAX_LEN;
-	char* res = (char*) ricevi(&len);
+	char* s = (char*) receive(&len);
+	std::string res(s);
+	free(s);
 	return res;
 }
 
-void* Connection::ricevi(int* len) {
+void* Connection::receive(int* len) {
 	void* msg = malloc(*len);
 
 	int rs = recv(this->id, msg, *len, 0);
