@@ -10,6 +10,7 @@
 #include "Cgi.hpp"
 
 #define ADDR "0.0.0.0"
+#define ROOT_FOLDER "./www"
 
 void* main_thread(void*);
 void* connection_thread(void*);
@@ -60,8 +61,8 @@ void* connection_thread(void* param) {
 	char* requestType = strtok(toParse, " ");
 	char* requestRoute = strtok(NULL, " ");
 	
-	char* formattedRoute = (char*) malloc(strlen(requestRoute)+1);
-	sprintf(formattedRoute, ".%s", requestRoute);
+	char* formattedRoute = (char*) malloc(strlen(requestRoute)+strlen(ROOT_FOLDER)+1);
+	sprintf(formattedRoute, "%s%s", ROOT_FOLDER, requestRoute);
 
 	char* res = handleRequest(requestType, formattedRoute);
 	
