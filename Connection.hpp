@@ -50,7 +50,8 @@ bool Connection::send(void* msg, int len) {
 std::string Connection::receive() {
 	int len = MAX_LEN;
 	char* s = (char*) receive(&len);
-	std::string res(s);
+	if (s == NULL) return "";
+	std::string res(s, len);
 	free(s);
 	return res;
 }

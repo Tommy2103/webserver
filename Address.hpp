@@ -66,15 +66,15 @@ int Address::getPort()
 std::string Address::getIpFromHostname(std::string hostname) {
 	struct hostent* host = gethostbyname(hostname.c_str());
 	if (host == NULL) {
-	switch (h_errno) {
-		case HOST_NOT_FOUND: 
-		printf("host not found\n");
-		break;
-		case NO_DATA:
-		printf("no ip\n");
-		break;
-	}
-	return NULL;
+		switch (h_errno) {
+			case HOST_NOT_FOUND: 
+			printf("host not found\n");
+			break;
+			case NO_DATA:
+			printf("no ip\n");
+			break;
+		}
+		return "";
 	} 
 	in_addr* address = (in_addr*) host->h_addr;
 

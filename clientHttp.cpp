@@ -1,5 +1,6 @@
-#include <stdio.h>
+#include <iostream>
 #include <regex>
+#include <string>
 #include "ClientTCP.hpp"
 #include "utilities.hpp"
 
@@ -10,32 +11,31 @@ int main(int argc, char *argv[])
 {
  	
 	if (argc != 4) {
-		printf((char*)"USAGE: %s [URL/IPv4] [Route] [Server port]\n", argv[0]);
+		std::cout << "USAGE: " << argv[0] << " [URL/IPv4] [Route] [Server port]\n";
 		errore((char*)"argv", -1);
 	}
 	
 
 	ClientTCP client;
-	char* host;
+	std::string host;
 	if (std::regex_match(argv[1], std::regex(REGEX_IPV4))) {
 		host = argv[1];
 	} else {
 		host = Address::getIpFromHostname(argv[1]);
-		if (host == NULL) errore("getIpFromHostname()", -2);
+		if (host.empty()) errore("getIpFromHostname()", -2);
 	}
 	Address server(host, atoi(argv[3]));
-	
-	if (client.connetti(server)) errore("connect()", -3);
+	if (client.connect(server)) errore("connect()", -3);
+
 	char request[MAX_REQ];
 	sprintf(request, "GET %s HTTP/1.1\r\nHost: %s\r\nAccept: text/html\r\n\r\n", argv[2], argv[1]);
-	client.invia(request);
+	client.send(request);
 	
-	char* res; 
+	std::string res;
 
-	while ((res = client.ricevi()) != NULL) {
-		printf("---------\n%d byte\n---------\n", strlen(res));
-		printf("%s\n", res);
-		free(res);
+	while (!(res = client.receive()).empty()) {
+		std::cout << "---------\n" << res.size() << " byte\n---------\n";
+		std::cout << res << "\n";
 	}
 
 	

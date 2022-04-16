@@ -1,10 +1,11 @@
+#include "Connection.hpp"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
+#include <thread>
 #include "ServerTCP.hpp"
 #include "utilities.hpp"
 #include "Cgi.hpp"
@@ -12,52 +13,48 @@
 #define ADDR "0.0.0.0"
 #define ROOT_FOLDER "./www"
 
-void* main_thread(void*);
-void* connection_thread(void*);
+void main_thread(int);
+void connection_thread(Connection*);
 char* handleRequest(char*, char*);
 
 
 int main(int argc, char const *argv[])
 {
 	if (argc != 2) {
-		printf("USAGE: %s [Port]\n", argv[0]);
+		std::cout << "USAGE: " << argv[0] << " [Port]\n";
 		errore("argv", -1);
 	}
 
-	pthread_t tid;
 	int port = atoi(argv[1]);
-	pthread_create(&tid, NULL, main_thread, (void*)&port);
-
-	printf("premi un tasto per interrompere il server...\n");
+	std::thread main(main_thread, port);
+	main.detach();
+	std::cout << "premi un tasto per interrompere il server...\n";
 	getchar();
-
 	return 0;
 }
 
-void* main_thread(void* param) {
-	int port = *(int*)param;
+void main_thread(int port) {
 	ServerTCP server((char*)ADDR, port);
-	
+
 	while (1) {
-		Connection* conn = server.ascolta();
+		Connection* conn = server.listen();
 		
-		pthread_t tid_connection;
-		pthread_create(&tid_connection, NULL, connection_thread, (void*) conn);
-		pthread_detach(tid_connection);	
+		std::thread connection(connection_thread, conn);
+		connection.detach();
+		delete conn;
 	}
 
 
 }
 
-void* connection_thread(void* param) {
-	Connection* conn = (Connection*) param;
+void connection_thread(Connection* conn) {
 
-	char* req = conn->ricevi();
+	std::string req = conn->receive();
 
-	printf("response: %d byte\n\n", strlen(req));
-	printf("%s\n", req);
+	std::cout << "response: " << req.size() << " byte\n\n";
+	std::cout << req << "\n";
 
-	char* toParse = strdup(req);
+	char* toParse = (char*) req.c_str();
 	char* requestType = strtok(toParse, " ");
 	char* requestRoute = strtok(NULL, " ");
 	
@@ -66,16 +63,12 @@ void* connection_thread(void* param) {
 
 	char* res = handleRequest(requestType, formattedRoute);
 	
-	char* cgiRes = Cgi::parse(res);
-	conn->invia(cgiRes);
-
-	free(cgiRes);
+	//char* cgiRes = Cgi::parse(res);
+	conn->send(res);
+	//free(cgiRes);
 	free(res);
 	free(formattedRoute);
-	free(toParse);
-	free(req);
 	delete conn;
-	pthread_exit(NULL);
 }
 
 char* handleRequest(char* requestType, char* requestRoute) {
